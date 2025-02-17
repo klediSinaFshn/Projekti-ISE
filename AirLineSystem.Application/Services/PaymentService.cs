@@ -16,26 +16,32 @@ namespace AirLineSystem.Services.Services
     {
        
         private readonly AirLineSystem.Domain.Models.StripeService _stripeService;
+       
         private IConfiguration configuration;
 
-        // Constructor to initialize PayPal service
+        
         public PaymentService()
         {
            
             _stripeService = new AirLineSystem.Domain.Models.StripeService(configuration);
+         
         }
 
-        // Create a new order (buy action)
         public async Task<string> CreateOrderAsync(decimal amount)
         {
             return await _stripeService.CreatePaymentIntentAsync(amount);
         }
 
         
-        // Refund a captured payment
         public async Task<string> RefundPaymentAsync(string paymentIntentId)
         {
-            return await _stripeService.RefundPaymentAsync(paymentIntentId);
+            try
+            {
+                return await _stripeService.RefundPaymentAsync(paymentIntentId);
+            }
+            catch (Exception ex) {
+                return $"Soemthing went wrong: {ex.Message}";
+            }
         }
     }
 

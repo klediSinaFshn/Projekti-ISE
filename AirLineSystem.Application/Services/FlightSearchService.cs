@@ -13,67 +13,64 @@ public class FlightSearchService
     private static readonly HttpClient client = new HttpClient();
 
     private const string apiUrl = "https://test.api.amadeus.com/v2/shopping/flight-offers";
-    private const string apiKey = "ODgTt8k7jy1xbAcPyhnZo9tKeRQO"; // Replace with your actual API key
+    private const string apiKey = "ODgTt8k7jy1xbAcPyhnZo9tKeRQO";
 
-    // Method to get flight offers from Amadeus API
+
     public async Task<string> GetFlightOffersAsync(string origin, string destination, string departureDate, int adults)
     {
 
         try
         {
-            // Build the URL with query parameters
+           
             string requestUrl = $"{apiUrl}?originLocationCode={origin}&destinationLocationCode={destination}&departureDate={departureDate}&adults={adults}&max=2";
 
-            // Set the Authorization header for API Key (or Bearer token if necessary)
             client.DefaultRequestHeaders.Clear();
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
 
 
-            // Send the GET request
             HttpResponseMessage response = await client.GetAsync(requestUrl);
             //Console.WriteLine(response);
-            // Check if the response was successful
+         
             response.EnsureSuccessStatusCode();
 
-            // Read the response body
+            
             string jsonResponse = await response.Content.ReadAsStringAsync();
 
 
-            // Process the response and format it
+            
             var flightDetails = ProcessFlightData(jsonResponse);
 
-            // Return the formatted data as a JSON string
             return JsonConvert.SerializeObject(flightDetails, Newtonsoft.Json.Formatting.Indented);
         }
         catch (Exception ex)
         {
-            // Handle errors
+         
             return $"Error: {ex.Message}";
         }
     }
 
-    // Helper method to process the flight data and format it
+   
     private JObject ProcessFlightData(string jsonResponse)
     {
         JObject responseObject = JObject.Parse(jsonResponse);
 
-        // Get the "data" array from the response
+    
         JToken flightOffersToken = responseObject["data"];
-          Console.WriteLine(flightOffersToken);
-        // Check if the "data" is a valid array
+          //Console.WriteLine(flightOffersToken);
+      
         if (flightOffersToken == null || flightOffersToken.Type != JTokenType.Array)
         {
             Console.WriteLine("No flight offers found or 'data' is not an array.");
-            return new JObject(); // Return an empty result
+            return new JObject(); 
         }
 
-        // Initialize a JArray to store the formatted flight offers
+    
         var formattedOffers = new JArray();
 
-        // Loop through each flight offer in the "data" array
+      
         foreach (var flightOffer in flightOffersToken)
         {
-            // Format each flight offer
+            
             var formattedOffer = new JObject
             {
                 ["airline"] = flightOffer["itineraries"]?[0]["segments"]?[0]["carrierCode"]?.ToString(),
@@ -85,13 +82,14 @@ public class FlightSearchService
                 ["price"] = flightOffer["price"]?["total"]?.ToString()
             };
 
-            // Add the formatted offer to the formattedOffers array
+            Console.WriteLine(formattedOffer);
+          
             formattedOffers.Add(formattedOffer);
         }
 
         Console.WriteLine(formattedOffers);
 
-        // Return the final result as a JObject containing the formatted flight offers
+      
         return new JObject
         {
             ["flights"] = formattedOffers
@@ -115,7 +113,7 @@ public class FlightSearchService
         return "Invalid Date";
     }
 
-    // Helper method to format duration (e.g., PT1H10M to 1 hour 10 minutes)
+  
     private string FormatDuration(string isoDuration)
     {
         if (string.IsNullOrEmpty(isoDuration))
@@ -123,14 +121,12 @@ public class FlightSearchService
             return "Invalid Duration";
         }
 
-        // Remove leading "P" from the duration string
         var duration = isoDuration.TrimStart('P').ToUpperInvariant();
 
-        // Initialize variables for hours and minutes
         int hours = 0;
         int minutes = 0;
 
-        // Use regex to extract hours and minutes
+      
         var hoursMatch = Regex.Match(duration, @"(\d+)H");
         if (hoursMatch.Success)
         {
@@ -143,7 +139,6 @@ public class FlightSearchService
             minutes = int.Parse(minutesMatch.Groups[1].Value);
         }
 
-        // Return formatted duration string
         return $"{hours} hour{(hours > 1 ? "s" : "")} {minutes} minute{(minutes > 1 ? "s" : "")}";
 
 
